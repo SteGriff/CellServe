@@ -11,11 +11,15 @@ namespace CellServe.Web.Controllers
         [HttpGet, ActionName("Index")]        
         public ActionResult GetData(string table)
         {
+            var formData = Request.QueryString.AllKeys.ToDictionary(k => k, v => Request.QueryString[v]);
+
             object req = new
             {
                 Table = table,
-                Operation = "Read"
+                Operation = "Read",
+                Filter = formData
             };
+
             return Json(req, JsonRequestBehavior.AllowGet);
         }
 
@@ -24,12 +28,15 @@ namespace CellServe.Web.Controllers
         {
             //var formData = form.AllKeys.Select(k => )
 
+            var formData = form.AllKeys.ToDictionary(k => k, v => form[v]);
+
             object req = new
             {
                 Table = table,
                 Operation = "Write",
-                Values = form
+                Values = formData
             };
+
             return Json(req);
         }
     }
