@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CellServe.ExcelHandler;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -8,7 +9,7 @@ namespace CellServe.Web.Controllers
 {
     public class DataController : Controller
     {
-        [HttpGet, ActionName("Index")]        
+        [HttpGet, ActionName("Index")]
         public ActionResult GetData(string table)
         {
             var formData = Request.QueryString.AllKeys.ToDictionary(k => k, v => Request.QueryString[v]);
@@ -36,6 +37,16 @@ namespace CellServe.Web.Controllers
                 Operation = "Write",
                 Values = formData
             };
+
+            try
+            {
+                var repo = new WorkbookRepository();
+                repo.Add(table, formData);
+            }
+            catch (CellServeException cex)
+            {
+                return Json(new { Message = cex.Message });
+            }
 
             return Json(req);
         }

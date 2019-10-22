@@ -52,27 +52,39 @@ namespace CellServe.ExcelHandler
             }
         }
 
-        public void Add(string table, dynamic value)
+        public void Add(string table, Dictionary<string,string> valuesDictionary)
         {
             lock (_workbookLock)
             {
                 var excel = GetExcelPackage();
-                var sheet = GetWorksheet(excel, table);
-                var headers = GetHeaders(sheet.Cells);
-                var newRow = GetNextFreeRow(sheet.Cells);
-                var valuesDictionary = (Dictionary<string, object>)value;
+                ExcelWorksheet sheet;
+                Dictionary<string, string> headers;
+                try
+                {
+                    sheet = GetWorksheet(excel, table);
+                    headers = GetHeaders(sheet.Cells);
+                }
+                catch (Exception)
+                {
+                    throw new CellServeException("No such table as " + table);
+                }
+
+                var newRow = GetNextFreeRow(sheet);
                 WriteRow(newRow, headers, valuesDictionary);
+                excel.Save();
             }
         }
 
-        private void WriteRow(ExcelRange row, Dictionary<string, string> headers, Dictionary<string, object> values)
+        private void WriteRow(ExcelRange row, Dictionary<string, string> headers, Dictionary<string, string> valuesDictionary)
         {
-            foreach (var valueToWrite in values)
+            var rowNum = row.Start.Row;
+
+            foreach (var valueToWrite in valuesDictionary)
             {
                 var valueToWriteLowercaseName = valueToWrite.Key.ToLower();
                 var header = headers.FirstOrDefault(h => h.Value.ToLower() == valueToWriteLowercaseName);
                 var column = header.Key;
-                var cell = row[$"{column}:{column}"];
+                var cell = row[$"{column}{rowNum}"];
                 cell.Value = valueToWrite.Value;
             }
         }
@@ -112,20 +124,54 @@ namespace CellServe.ExcelHandler
             return new string(address.Where(char.IsLetter).ToArray());
         }
 
-        private ExcelRange GetNextFreeRow(ExcelRange cells)
+        private ExcelRange GetNextFreeRow(ExcelWorksheet sheet)
         {
             try
             {
-                // Get the row number
-                var row = cells["A:A"].FirstOrDefault(c => c.Value == null).Start.Row;
+                // Get the used range (Dimension)
+                int firstUnusedRow = 1;
+                bool foundEmpty = false;
+                var used = sheet.Dimension.Rows;
+                for(int row = 1; row < used; row++)
+                {
+                    var firstColCell = sheet.Cells[$"A{row}"];
+                    var cellValue = GetCellValue(firstColCell);
+                    if (cellValue == null)
+                    {
+                        firstUnusedRow = row;
+                        foundEmpty = true;
+                    }
+                }
+
+                if (!foundEmpty)
+                {
+                    firstUnusedRow = used + 1;
+                }
+
+                //var firstColumn = cells["A:A"];
+                //var firstColumnFirstEmptyCell = firstColumn.FirstOrDefault(c => string.IsNullOrEmpty(c.Value.ToString()));
+                //var rowNumber = firstColumnFirstEmptyCell.Start.Row;
 
                 // Return the row range
-                return cells[$"{row}{row}"];
+                return sheet.Cells[$"{firstUnusedRow}:{firstUnusedRow}"];
             }
             catch (Exception ex)
             {
                 throw new CellServeException("Couldn't find an empty row", ex);
             }
+        }
+
+        private string GetCellValue(object value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+            else if (value as DateTime? != null)
+            {
+                return ((DateTime)value).ToString("dd/MM/yyyy");
+            }
+            return value.ToString().Trim();
         }
     }
 }

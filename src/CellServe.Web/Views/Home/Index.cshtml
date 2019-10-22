@@ -19,15 +19,15 @@
 <div class="row">
     <div class="col-md-4">
         <h2>Getting started</h2>
-        <form action="/Data/Manufacturers" method="POST">
+        <form action="/Data/Customers" method="POST">
             <div class="form-group">
-                <label for="Manufacturer">Manufacturer</label>
+                <label for="Name">Name</label>
                 <input type="text"
                        class="form-control"
-                       id="Manufacturer"
-                       name="Manufacturer"
-                       placeholder="Manufacturer"
-                       value="Siemens">
+                       id="Name"
+                       name="Name"
+                       placeholder="Name"
+                       value="Mr Gerfmans">
             </div>
             <div class="form-group">
                 <label for="Country">Country</label>
@@ -45,21 +45,21 @@
 
     <div class="col-md-4">
         <p>Get all</p>
-        <form action="/Data/Manufacturers" method="GET">
+        <form action="/Data/Customers" method="GET">
             <button type="submit" class="btn btn-default">Get</button>
         </form>
     </div>
 
     <div class="col-md-4">
         <p>Get filtered</p>
-        <form action="/Data/Manufacturers" method="GET">
+        <form action="/Data/Customers" method="GET">
             <div class="form-group">
-                <label for="Manufacturer">Manufacturer</label>
+                <label for="Customer">Customer</label>
                 <input type="text"
                        class="form-control"
-                       id="Manufacturer"
-                       name="Manufacturer"
-                       placeholder="Manufacturer"
+                       id="Customer"
+                       name="Customer"
+                       placeholder="Customer"
                        value="Siemens">
             </div>
             <button type="submit" class="btn btn-default">Get filtered</button>
