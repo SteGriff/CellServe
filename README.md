@@ -33,6 +33,26 @@ You can then design input forms and analytics with your choice of platform and t
 
 N.b. If we can't find your configured Excel file location, a data store will be created at `C:\Temp\CellServeData.xlsx`, but it will be empty, so your consequent requests will fail.
 
+### Security
+
+We expect you to run CellServe on a private local network. Any website on the network which can reach the CellServe server will be able to use its API.
+
+You can limit exposure to only a certain domain by configuring the `customHeaders` config in `web.config`:
+
+````
+<httpProtocol>
+  <customHeaders>
+	<clear />
+	<add name="Access-Control-Allow-Origin" value="*" />
+  </customHeaders>
+</httpProtocol>
+````
+
+Change the `*` to a fully qualified domain, like `https://mycompany.intranet.local`. For more info, see the MDN page on [Access Control Allow Origin][mdncors].
+
+[mdncors]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin 
+
+
 ## API
 
 Your requests should use `application/x-www-form-urlencoded`, the standard content-type for HTML forms.
