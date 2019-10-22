@@ -12,6 +12,7 @@ namespace CellServe.Web.Controllers
         [HttpGet, ActionName("Index")]
         public ActionResult GetData(string table)
         {
+            Response.TrySkipIisCustomErrors = true;
             var formData = Request.QueryString.AllKeys.ToDictionary(k => k, v => Request.QueryString[v]);
 
             List<Dictionary<string,string>> results;
@@ -22,6 +23,7 @@ namespace CellServe.Web.Controllers
             }
             catch (CellServeException cex)
             {
+                Response.StatusCode = 400;
                 return Json(new { Message = cex.Message });
             }
 
@@ -39,8 +41,7 @@ namespace CellServe.Web.Controllers
         [HttpPost, ActionName("Index")]
         public ActionResult PostData(string table, FormCollection form)
         {
-            //var formData = form.AllKeys.Select(k => )
-
+            Response.TrySkipIisCustomErrors = true;
             var formData = form.AllKeys.ToDictionary(k => k, v => form[v]);
 
             object req = new
@@ -57,9 +58,11 @@ namespace CellServe.Web.Controllers
             }
             catch (CellServeException cex)
             {
+                Response.StatusCode = 400;
                 return Json(new { Message = cex.Message });
             }
 
+            Response.StatusCode = 201;
             return Json(req);
         }
     }
