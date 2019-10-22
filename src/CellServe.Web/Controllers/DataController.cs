@@ -14,14 +14,26 @@ namespace CellServe.Web.Controllers
         {
             var formData = Request.QueryString.AllKeys.ToDictionary(k => k, v => Request.QueryString[v]);
 
-            object req = new
+            List<Dictionary<string,string>> results;
+            try
+            {
+                var repo = new WorkbookRepository();
+                results = repo.Read(table, formData);
+            }
+            catch (CellServeException cex)
+            {
+                return Json(new { Message = cex.Message });
+            }
+
+            object response = new
             {
                 Table = table,
                 Operation = "Read",
-                Filter = formData
+                Filter = formData,
+                Results = results
             };
 
-            return Json(req, JsonRequestBehavior.AllowGet);
+            return Json(response, JsonRequestBehavior.AllowGet);
         }
 
         [HttpPost, ActionName("Index")]

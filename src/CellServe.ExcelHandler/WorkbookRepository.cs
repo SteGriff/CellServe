@@ -2,6 +2,7 @@
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ namespace CellServe.ExcelHandler
 {
     public class WorkbookRepository
     {
-        private IAppCache _queueCache;
+        //private IAppCache _queueCache;
         private string _fileLocation;
         private object _workbookLock;
 
@@ -52,7 +53,29 @@ namespace CellServe.ExcelHandler
             }
         }
 
-        public void Add(string table, Dictionary<string,string> valuesDictionary)
+        public List<Dictionary<string, string>> Read(string table, Dictionary<string, string> filterDictionary)
+        {
+            lock (_workbookLock)
+            {
+                var excel = GetExcelPackage();
+                ExcelWorksheet sheet;
+                Dictionary<string, string> headers;
+                try
+                {
+                    sheet = GetWorksheet(excel, table);
+                    headers = GetHeaders(sheet.Cells);
+                }
+                catch (Exception)
+                {
+                    throw new CellServeException("No such table as " + table);
+                }
+
+                var rowModels = FilterSheet(sheet, headers, filterDictionary);
+                return rowModels;
+            }
+        }
+
+        public void Add(string table, Dictionary<string, string> valuesDictionary)
         {
             lock (_workbookLock)
             {
@@ -75,15 +98,84 @@ namespace CellServe.ExcelHandler
             }
         }
 
+        private List<Dictionary<string, string>> FilterSheet(ExcelWorksheet sheet, Dictionary<string, string> headers, Dictionary<string, string> filterDictionary)
+        {
+            var used = sheet.Dimension.Rows;
+            var matchingRows = new List<int>();
+
+            // Start at 2; don't scan header
+            for (int row = 2; row <= used; row++)
+            {
+                // Check this row against every filter passed in
+                bool currentRowMatchesFilters = true;
+
+                foreach (var filterColumn in filterDictionary)
+                {
+                    // Skip empty filter criteria
+                    if (string.IsNullOrEmpty(filterColumn.Value)) { continue; }
+
+                    var columnAlpha = GetColumnAlphaForField(headers, filterColumn.Key);
+                    var cell = sheet.Cells[$"{columnAlpha}{row}"];
+                    var cellValue = GetCellValue(cell.Value);
+                    if (cellValue.ToLower() != filterColumn.Value.ToLower())
+                    {
+                        // If any filter fails, quit
+                        currentRowMatchesFilters = false;
+                        break;
+                    }
+                }
+
+                if (currentRowMatchesFilters)
+                {
+                    matchingRows.Add(row);
+                }
+            }
+
+            // Compose the matching rows into objects and return a list of them
+            var rowModels = new List<Dictionary<string, string>>();
+            foreach (var matchingRowNumber in matchingRows)
+            {
+                var row = sheet.Cells[$"{matchingRowNumber}:{matchingRowNumber}"];
+                var rowModel = RowToModel(row, headers);
+                rowModels.Add(rowModel);
+            }
+            return rowModels;
+        }
+
+        private Dictionary<string, string> RowToModel(ExcelRange row, Dictionary<string, string> headers)
+        {
+            var rowModel = new Dictionary<string, string>();
+            rowModel.Add("$ExcelRow", row.Start.Row.ToString());
+
+            foreach (var cell in row)
+            {
+                var cellColumnAlpha = AddressToColumnAlpha(cell.Address);
+                if (headers.ContainsKey(cellColumnAlpha))
+                {
+                    var fieldName = headers[cellColumnAlpha];
+                    var cellValue = GetCellValue(cell.Value);
+                    rowModel.Add(fieldName, cellValue);
+                }
+            }
+
+            return rowModel;
+        }
+
+        private string GetColumnAlphaForField(Dictionary<string, string> headers, string fieldName)
+        {
+            var valueToWriteLowercaseName = fieldName.ToLower();
+            var header = headers.FirstOrDefault(h => h.Value.ToLower() == valueToWriteLowercaseName);
+            var column = header.Key;
+            return column;
+        }
+
         private void WriteRow(ExcelRange row, Dictionary<string, string> headers, Dictionary<string, string> valuesDictionary)
         {
             var rowNum = row.Start.Row;
 
             foreach (var valueToWrite in valuesDictionary)
             {
-                var valueToWriteLowercaseName = valueToWrite.Key.ToLower();
-                var header = headers.FirstOrDefault(h => h.Value.ToLower() == valueToWriteLowercaseName);
-                var column = header.Key;
+                var column = GetColumnAlphaForField(headers, valueToWrite.Key);
                 var cell = row[$"{column}{rowNum}"];
                 cell.Value = valueToWrite.Value;
             }
@@ -132,7 +224,7 @@ namespace CellServe.ExcelHandler
                 int firstUnusedRow = 1;
                 bool foundEmpty = false;
                 var used = sheet.Dimension.Rows;
-                for(int row = 1; row < used; row++)
+                for (int row = 1; row < used; row++)
                 {
                     var firstColCell = sheet.Cells[$"A{row}"];
                     var cellValue = GetCellValue(firstColCell);
@@ -147,10 +239,6 @@ namespace CellServe.ExcelHandler
                 {
                     firstUnusedRow = used + 1;
                 }
-
-                //var firstColumn = cells["A:A"];
-                //var firstColumnFirstEmptyCell = firstColumn.FirstOrDefault(c => string.IsNullOrEmpty(c.Value.ToString()));
-                //var rowNumber = firstColumnFirstEmptyCell.Start.Row;
 
                 // Return the row range
                 return sheet.Cells[$"{firstUnusedRow}:{firstUnusedRow}"];

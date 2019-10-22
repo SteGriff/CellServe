@@ -1,24 +1,16 @@
-﻿@{
-    ViewBag.Title = "Home Page";
-}
-
-<div class="jumbotron">
-    <h1>ASP.NET</h1>
-    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-    <p><a href="https://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
+﻿<div class="jumbotron">
+    <h1>CellServe</h1>
 </div>
 
 <div class="row">
     <div class="col-md-12">
-        <table>
-
-        </table>
+        <table></table>
     </div>
 </div>
 
 <div class="row">
+    <p>Add Customer</p>
     <div class="col-md-4">
-        <h2>Getting started</h2>
         <form action="/Data/Customers" method="POST">
             <div class="form-group">
                 <label for="Name">Name</label>
@@ -30,12 +22,19 @@
                        value="Mr Gerfmans">
             </div>
             <div class="form-group">
+                <label for="DoB">DoB</label>
+                <input type="date"
+                       class="form-control"
+                       id="DoB"
+                       name="DoB">
+            </div>
+            <div class="form-group">
                 <label for="Country">Country</label>
                 <input type="text"
                        class="form-control"
                        id="Country"
                        name="Country"
-                       placeholder="Table"
+                       placeholder="Country"
                        value="Germany">
             </div>
             <button type="submit" class="btn btn-default">Post</button>
@@ -44,23 +43,101 @@
     </div>
 
     <div class="col-md-4">
-        <p>Get all</p>
+        <p>Get all Customers</p>
         <form action="/Data/Customers" method="GET">
-            <button type="submit" class="btn btn-default">Get</button>
+            <button type="submit" class="btn btn-default">Get all</button>
         </form>
     </div>
 
     <div class="col-md-4">
-        <p>Get filtered</p>
+        <p>Get filtered Customers</p>
         <form action="/Data/Customers" method="GET">
             <div class="form-group">
-                <label for="Customer">Customer</label>
+                <label for="Country">Country</label>
                 <input type="text"
                        class="form-control"
-                       id="Customer"
-                       name="Customer"
-                       placeholder="Customer"
-                       value="Siemens">
+                       id="Country"
+                       name="Country"
+                       placeholder="Country"
+                       value="USA">
+            </div>
+            <button type="submit" class="btn btn-default">Get filtered</button>
+        </form>
+    </div>
+</div>
+
+<div class="row"></div>
+
+<div class="row">
+    <div class="col-md-4">
+        <p>Add Product</p>
+        <form action="/Data/Products" method="POST">
+            <div class="form-group">
+                <label for="SKU">SKU</label>
+                <input type="text"
+                       class="form-control"
+                       id="SKU"
+                       name="SKU"
+                       placeholder="SKU"
+                       value="ABC101">
+            </div>
+            <div class="form-group">
+                <label for="Name">Name</label>
+                <input type="text"
+                       class="form-control"
+                       id="Name"
+                       name="Name"
+                       placeholder="Name"
+                       value="Rice cake">
+            </div>
+            <div class="form-group">
+                <label for="Qty">Qty</label>
+                <input type="number"
+                       class="form-control"
+                       id="Qty"
+                       name="Qty"
+                       value="10">
+            </div>
+            <button type="submit" class="btn btn-default">Post</button>
+        </form>
+
+    </div>
+
+    <div class="col-md-4">
+        <p>Get all Products</p>
+        <form action="/Data/Products" method="GET">
+            <button type="submit" class="btn btn-default">Get all</button>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <p>Get filtered Products</p>
+        <form action="/Data/Products" method="GET">
+            <div class="form-group">
+                <label for="SKU">SKU</label>
+                <input type="text"
+                       class="form-control"
+                       id="SKU"
+                       name="SKU"
+                       placeholder="SKU"
+                       value="ABC101">
+            </div>
+            <div class="form-group">
+                <label for="Name">Name</label>
+                <input type="text"
+                       class="form-control"
+                       id="Name"
+                       name="Name"
+                       placeholder="Name"
+                       value="Rice cake">
+            </div>
+            <div class="form-group">
+                <label for="Qty">Qty</label>
+                <input type="number"
+                       class="form-control"
+                       id="Qty"
+                       name="Qty"
+                       value="10">
             </div>
             <button type="submit" class="btn btn-default">Get filtered</button>
         </form>
