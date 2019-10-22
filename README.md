@@ -42,8 +42,8 @@ You can limit exposure to only a certain domain by configuring the `customHeader
 ````
 <httpProtocol>
   <customHeaders>
-	<clear />
-	<add name="Access-Control-Allow-Origin" value="*" />
+    <clear />
+    <add name="Access-Control-Allow-Origin" value="*" />
   </customHeaders>
 </httpProtocol>
 ````
@@ -61,19 +61,19 @@ Responses are `application/json; charset=utf-8`.
 
 ### `POST /Data/{Table}`
 
-Create a record in the `Table` table. Remember to set a 'Name' attribute on each HTML field which you want to appear. Each of these fields are expected to exist in your Excel spreadsheet.
+Creates a record in the specified table. Remember to set a `name` attribute on each HTML field which you want to send through. Each of these fields are expected to exist as headers in your Excel spreadsheet.
 
-For example, if your workbook has a sheet called 'Customers', with a heading labelled 'Name', the following form will add a Customer row, setting only the name:
+For example, if your workbook has a sheet called 'Customers', with a heading labelled 'Surname', the following form will add a Customer row, setting only the Surname field:
 
 ````
 <form action="/Data/Customers" method="POST">
-	<label for="Surname">Surname</label>
-	<input type="text"
-		id="Surname"
-		name="Surname"
-		placeholder="Surname"
-		value="Jones">
-	<button type="submit">Submit</button>
+  <label for="Surname">Surname</label>
+  <input type="text"
+         id="Surname"
+         name="Surname"
+         placeholder="Surname"
+         value="Jones">
+  <button type="submit">Submit</button>
 </form>
 ````
 
@@ -84,13 +84,13 @@ In case of an error, there will be JSON response with a `Message` property, and 
 
 ### `GET /Data/{Table}`
 
-Get records from the `Table` table. Any field that you pass as a form value will be used as a filter for an *exact match*. Without filters, the call will get everything from that sheet.
+Gets records from the specified table. Any field that you pass as a form value will be used as a filter for an *exact match*. Without filters, the call will get everything from that sheet.
 
 This form would get all values from the `Products` worksheet:
 
 ````
 <form action="/Data/Products" method="GET">
-	<button type="submit">Get all</button>
+  <button type="submit">Get all</button>
 </form>
 ````
 
@@ -98,13 +98,13 @@ This form would get Products where the SKU column contains the specified value:
 
 ````
 <form action="/Data/Products" method="GET">
-	<label for="SKU">SKU</label>
-	<input type="text"
-		   id="SKU"
-		   name="SKU"
-		   placeholder="SKU"
-		   value="ABC102">
-	<button type="submit">Search</button>
+  <label for="SKU">SKU</label>
+  <input type="text"
+         id="SKU"
+         name="SKU"
+         placeholder="SKU"
+         value="ABC102">
+  <button type="submit">Search</button>
 </form>
 ````
 
@@ -182,3 +182,9 @@ We have an aspiration to be as ACID-compliant as possible:
  0. Add it to the in-memory cache
  0. Attempt to run the thread-safe queue digestion
  0. The queue digestion processes all Adds
+ 
+## License
+
+See LICENSE file.
+
+If you require an enterprise license or support for this software, please contact me using `github at stegriff co uk`
