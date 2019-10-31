@@ -78,21 +78,46 @@ namespace CellServe.Web.Controllers
             Response.TrySkipIisCustomErrors = true;
             var formData = Request.QueryString.AllKeys.ToDictionary(k => k, v => Request.QueryString[v]);
 
-            List<Dictionary<string, string>> results;
-            try
-            {
-                results = _workbookRepository.Read(table, formData);
-            }
-            catch (CellServeException cex)
+            if (formData.Count < 1)
             {
                 Response.StatusCode = 400;
-                return Json(new { cex.Message });
+                return Json(new { Message = "Please pass in a Key:Value representing a Column:SearchTerm" });
+            }
+            else if (formData.Count > 1)
+            {
+                Response.StatusCode = 400;
+                return Json(new { Message = "Please pass in only field only to get Suggestions for that field. You sent multiple fields." });
             }
 
+            var searchColumn = formData.FirstOrDefault().Key;
+            var searchTerm = formData.FirstOrDefault().Value.ToLower();
+
+            List<string> results;
+            if (searchTerm.Length > 2)
+            {
+                try
+                {
+                    var allColumnValues = _workbookRepository.ColumnValues(table, searchColumn);
+                    results = allColumnValues
+                        .Where(colValue => colValue.ToLower().Contains(searchTerm))
+                        .Take(20)
+                        .ToList();
+                }
+                catch (CellServeException cex)
+                {
+                    Response.StatusCode = 400;
+                    return Json(new { cex.Message });
+                }
+            }
+            else
+            {
+                results = new List<string>();
+            }
+            
             object response = new
             {
                 Table = table,
-                Operation = "Read",
+                Operation = "Suggestions",
                 Filter = formData,
                 Results = results
             };

@@ -64,6 +64,28 @@ namespace CellServe.ExcelHandler.Strategies
             return rowModels;
         }
 
+        public List<string> GetAllValuesInColumn(ExcelWorksheet sheet, Dictionary<string, string> headers, string fieldName)
+        {
+            try
+            {
+                var used = sheet.Dimension.Rows;
 
+                var columnAlpha = _rowModelingStrategy.GetColumnAlphaForField(headers, fieldName);
+                var entireColumn = sheet.Cells[$"{columnAlpha}:{columnAlpha}"];
+
+                var results = entireColumn
+                    .Skip(1)
+                    .Take(used)
+                    .Where(c => c.Value != null)
+                    .Select(c => c.Value.ToCellValueString())
+                    .ToList();
+
+                return results;
+            }
+            catch (Exception)
+            {
+                return new List<string>();
+            }
+        }
     }
 }

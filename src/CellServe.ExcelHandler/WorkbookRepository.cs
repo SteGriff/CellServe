@@ -14,16 +14,17 @@ namespace CellServe.ExcelHandler
 {
     public class WorkbookRepository : IWorkbookRepository
     {
-        //private IAppCache _queueCache;
+        private readonly IAppCache _cache;
         private readonly string _fileLocation;
         private readonly object _workbookLock;
         private readonly ISheetFilterStrategy _sheetFilterStrategy;
         private readonly IRowModelingStrategy _rowModelingStrategy;
 
-        public WorkbookRepository(ISheetFilterStrategy sheetFilterStrategy, IRowModelingStrategy rowModelingStrategy)
+        public WorkbookRepository(ISheetFilterStrategy sheetFilterStrategy, IRowModelingStrategy rowModelingStrategy, IAppCache cache)
         {
             _sheetFilterStrategy = sheetFilterStrategy;
             _rowModelingStrategy = rowModelingStrategy;
+            _cache = cache;
 
             // If we can't find the user's wb location in web.config, pop it here:
             const string tempDirectory = @"C:\Temp";
@@ -65,7 +66,7 @@ namespace CellServe.ExcelHandler
                         throw new CellServeException("No such table as " + table);
                     }
 
-                    var rowModels = FilterSheet(sheet, headers, filterDictionary);
+                    var rowModels = _sheetFilterStrategy.FilterSheet(sheet, headers, filterDictionary);
                     return rowModels;
                 }
             }
@@ -96,6 +97,36 @@ namespace CellServe.ExcelHandler
             }
         }
 
+        public List<string> ColumnValues(string table, string column)
+        {
+            var values = _cache.GetOrAdd($"colvals-{table}-{column}", () => GetColumnValues(table, column));
+            return values;
+        }
+
+        private List<string> GetColumnValues(string table, string fieldName)
+        {
+            lock (_workbookLock)
+            {
+                using (var excel = GetExcelPackage())
+                {
+                    ExcelWorksheet sheet;
+                    Dictionary<string, string> headers;
+                    try
+                    {
+                        sheet = GetWorksheet(excel, table);
+                        headers = GetHeaders(sheet.Cells);
+                    }
+                    catch (Exception)
+                    {
+                        throw new CellServeException("No such table as " + table);
+                    }
+
+                    var values = _sheetFilterStrategy.GetAllValuesInColumn(sheet, headers, fieldName);
+                    return values;
+                }
+            }
+        }
+
         private ExcelPackage GetExcelPackage()
         {
             try
@@ -107,11 +138,6 @@ namespace CellServe.ExcelHandler
             {
                 throw new CellServeException("Failed to open the workbook at " + _fileLocation, ex);
             }
-        }
-
-        private List<Dictionary<string, string>> FilterSheet(ExcelWorksheet sheet, Dictionary<string, string> headers, Dictionary<string, string> filterDictionary)
-        {
-            return _sheetFilterStrategy.FilterSheet(sheet, headers, filterDictionary);
         }
 
         private void WriteRow(ExcelRange row, Dictionary<string, string> headers, Dictionary<string, string> valuesDictionary)
@@ -188,6 +214,5 @@ namespace CellServe.ExcelHandler
                 throw new CellServeException("Couldn't find an empty row", ex);
             }
         }
-
     }
 }
