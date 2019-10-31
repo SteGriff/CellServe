@@ -1,4 +1,6 @@
-﻿using LazyCache;
+﻿using CellServe.ExcelHandler.Interfaces;
+using CellServe.ExcelHandler.Strategies;
+using LazyCache;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
@@ -10,14 +12,19 @@ using System.Threading.Tasks;
 
 namespace CellServe.ExcelHandler
 {
-    public class WorkbookRepository
+    public class WorkbookRepository : IWorkbookRepository
     {
         //private IAppCache _queueCache;
-        private string _fileLocation;
-        private object _workbookLock;
+        private readonly string _fileLocation;
+        private readonly object _workbookLock;
+        private readonly ISheetFilterStrategy _sheetFilterStrategy;
+        private readonly IRowModelingStrategy _rowModelingStrategy;
 
-        public WorkbookRepository()
+        public WorkbookRepository(ISheetFilterStrategy sheetFilterStrategy, IRowModelingStrategy rowModelingStrategy)
         {
+            _sheetFilterStrategy = sheetFilterStrategy;
+            _rowModelingStrategy = rowModelingStrategy;
+
             // If we can't find the user's wb location in web.config, pop it here:
             const string tempDirectory = @"C:\Temp";
 
@@ -40,6 +47,55 @@ namespace CellServe.ExcelHandler
             }
         }
 
+        public List<Dictionary<string, string>> Read(string table, Dictionary<string, string> filterDictionary)
+        {
+            lock (_workbookLock)
+            {
+                using (var excel = GetExcelPackage())
+                {
+                    ExcelWorksheet sheet;
+                    Dictionary<string, string> headers;
+                    try
+                    {
+                        sheet = GetWorksheet(excel, table);
+                        headers = GetHeaders(sheet.Cells);
+                    }
+                    catch (Exception)
+                    {
+                        throw new CellServeException("No such table as " + table);
+                    }
+
+                    var rowModels = FilterSheet(sheet, headers, filterDictionary);
+                    return rowModels;
+                }
+            }
+        }
+
+        public void Add(string table, Dictionary<string, string> valuesDictionary)
+        {
+            lock (_workbookLock)
+            {
+                using (var excel = GetExcelPackage())
+                {
+                    ExcelWorksheet sheet;
+                    Dictionary<string, string> headers;
+                    try
+                    {
+                        sheet = GetWorksheet(excel, table);
+                        headers = GetHeaders(sheet.Cells);
+                    }
+                    catch (Exception)
+                    {
+                        throw new CellServeException("No such table as " + table);
+                    }
+
+                    var newRow = GetNextFreeRow(sheet);
+                    WriteRow(newRow, headers, valuesDictionary);
+                    excel.Save();
+                }
+            }
+        }
+
         private ExcelPackage GetExcelPackage()
         {
             try
@@ -53,120 +109,9 @@ namespace CellServe.ExcelHandler
             }
         }
 
-        public List<Dictionary<string, string>> Read(string table, Dictionary<string, string> filterDictionary)
-        {
-            lock (_workbookLock)
-            {
-                var excel = GetExcelPackage();
-                ExcelWorksheet sheet;
-                Dictionary<string, string> headers;
-                try
-                {
-                    sheet = GetWorksheet(excel, table);
-                    headers = GetHeaders(sheet.Cells);
-                }
-                catch (Exception)
-                {
-                    throw new CellServeException("No such table as " + table);
-                }
-
-                var rowModels = FilterSheet(sheet, headers, filterDictionary);
-                return rowModels;
-            }
-        }
-
-        public void Add(string table, Dictionary<string, string> valuesDictionary)
-        {
-            lock (_workbookLock)
-            {
-                var excel = GetExcelPackage();
-                ExcelWorksheet sheet;
-                Dictionary<string, string> headers;
-                try
-                {
-                    sheet = GetWorksheet(excel, table);
-                    headers = GetHeaders(sheet.Cells);
-                }
-                catch (Exception)
-                {
-                    throw new CellServeException("No such table as " + table);
-                }
-
-                var newRow = GetNextFreeRow(sheet);
-                WriteRow(newRow, headers, valuesDictionary);
-                excel.Save();
-            }
-        }
-
         private List<Dictionary<string, string>> FilterSheet(ExcelWorksheet sheet, Dictionary<string, string> headers, Dictionary<string, string> filterDictionary)
         {
-            var used = sheet.Dimension.Rows;
-            var matchingRows = new List<int>();
-
-            // Start at 2; don't scan header
-            for (int row = 2; row <= used; row++)
-            {
-                // Check this row against every filter passed in
-                bool currentRowMatchesFilters = true;
-
-                foreach (var filterColumn in filterDictionary)
-                {
-                    // Skip empty filter criteria
-                    if (string.IsNullOrEmpty(filterColumn.Value)) { continue; }
-
-                    var columnAlpha = GetColumnAlphaForField(headers, filterColumn.Key);
-                    var cell = sheet.Cells[$"{columnAlpha}{row}"];
-                    var cellValue = GetCellValue(cell.Value);
-                    if (cellValue.ToLower() != filterColumn.Value.ToLower())
-                    {
-                        // If any filter fails, quit
-                        currentRowMatchesFilters = false;
-                        break;
-                    }
-                }
-
-                if (currentRowMatchesFilters)
-                {
-                    matchingRows.Add(row);
-                }
-            }
-
-            // Compose the matching rows into objects and return a list of them
-            var rowModels = new List<Dictionary<string, string>>();
-            foreach (var matchingRowNumber in matchingRows)
-            {
-                var row = sheet.Cells[$"{matchingRowNumber}:{matchingRowNumber}"];
-                var rowModel = RowToModel(row, headers);
-                rowModels.Add(rowModel);
-            }
-            return rowModels;
-        }
-
-        private Dictionary<string, string> RowToModel(ExcelRange row, Dictionary<string, string> headers)
-        {
-            var rowModel = new Dictionary<string, string>();
-            rowModel.Add("$ExcelRow", row.Start.Row.ToString());
-
-            foreach (var cell in row)
-            {
-                var cellColumnAlpha = AddressToColumnAlpha(cell.Address);
-                if (headers.ContainsKey(cellColumnAlpha))
-                {
-                    var fieldName = headers[cellColumnAlpha];
-                    var cellValue = GetCellValue(cell.Value);
-                    rowModel.Add(fieldName, cellValue);
-                }
-            }
-
-            return rowModel;
-        }
-
-        private string GetColumnAlphaForField(Dictionary<string, string> headers, string fieldName)
-        {
-            var valueToWriteLowercaseName = fieldName.ToLower();
-            var header = headers.FirstOrDefault(h => h.Value.ToLower() == valueToWriteLowercaseName);
-            var column = header.Key;
-            return column;
+            return _sheetFilterStrategy.FilterSheet(sheet, headers, filterDictionary);
         }
 
         private void WriteRow(ExcelRange row, Dictionary<string, string> headers, Dictionary<string, string> valuesDictionary)
@@ -175,7 +120,7 @@ namespace CellServe.ExcelHandler
 
             foreach (var valueToWrite in valuesDictionary)
             {
-                var column = GetColumnAlphaForField(headers, valueToWrite.Key);
+                var column = _rowModelingStrategy.GetColumnAlphaForField(headers, valueToWrite.Key);
                 var cell = row[$"{column}{rowNum}"];
                 cell.Value = valueToWrite.Value;
             }
@@ -203,17 +148,12 @@ namespace CellServe.ExcelHandler
                 if (cell.Value == null) break;
 
                 headers.Add(
-                    AddressToColumnAlpha(cell.Address),
+                    cell.Address.AddressToColumnAlpha(),
                     cell.Value.ToString().Trim()
                 );
             }
 
             return headers;
-        }
-
-        private string AddressToColumnAlpha(string address)
-        {
-            return new string(address.Where(char.IsLetter).ToArray());
         }
 
         private ExcelRange GetNextFreeRow(ExcelWorksheet sheet)
@@ -227,7 +167,7 @@ namespace CellServe.ExcelHandler
                 for (int row = 1; row < used; row++)
                 {
                     var firstColCell = sheet.Cells[$"A{row}"];
-                    var cellValue = GetCellValue(firstColCell);
+                    var cellValue = firstColCell.ToCellValueString();
                     if (cellValue == null)
                     {
                         firstUnusedRow = row;
@@ -249,17 +189,5 @@ namespace CellServe.ExcelHandler
             }
         }
 
-        private string GetCellValue(object value)
-        {
-            if (value == null)
-            {
-                return null;
-            }
-            else if (value as DateTime? != null)
-            {
-                return ((DateTime)value).ToString("dd/MM/yyyy");
-            }
-            return value.ToString().Trim();
-        }
     }
 }

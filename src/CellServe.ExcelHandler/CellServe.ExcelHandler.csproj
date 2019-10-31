@@ -52,6 +52,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CellServeException.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="Interfaces\IRowModelingStrategy.cs" />
+    <Compile Include="Interfaces\ISheetFilterStrategy.cs" />
+    <Compile Include="Interfaces\IWorkbookRepository.cs" />
+    <Compile Include="Strategies\RowModelingStrategy.cs" />
+    <Compile Include="Strategies\SheetFilterStrategy.cs" />
     <Compile Include="WorkbookConfig.cs" />
     <Compile Include="WorkbookRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

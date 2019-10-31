@@ -1,4 +1,5 @@
 ﻿using CellServe.ExcelHandler;
+using CellServe.ExcelHandler.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,13 @@ namespace CellServe.Web.Controllers
 {
     public class DataController : Controller
     {
+        private readonly IWorkbookRepository _workbookRepository;
+
+        public DataController(IWorkbookRepository workbookRepository)
+        {
+            _workbookRepository = workbookRepository;
+        }
+
         [HttpGet, ActionName("Index")]
         public ActionResult GetData(string table)
         {
@@ -18,13 +26,12 @@ namespace CellServe.Web.Controllers
             List<Dictionary<string,string>> results;
             try
             {
-                var repo = new WorkbookRepository();
-                results = repo.Read(table, formData);
+                results = _workbookRepository.Read(table, formData);
             }
             catch (CellServeException cex)
             {
                 Response.StatusCode = 400;
-                return Json(new { Message = cex.Message });
+                return Json(new { cex.Message });
             }
 
             object response = new
@@ -53,17 +60,45 @@ namespace CellServe.Web.Controllers
 
             try
             {
-                var repo = new WorkbookRepository();
-                repo.Add(table, formData);
+                _workbookRepository.Add(table, formData);
             }
             catch (CellServeException cex)
             {
                 Response.StatusCode = 400;
-                return Json(new { Message = cex.Message });
+                return Json(new { cex.Message });
             }
 
             Response.StatusCode = 201;
             return Json(req);
         }
+
+        [HttpGet, ActionName("Suggestions")]
+        public ActionResult GetSuggestions(string table)
+        {
+            Response.TrySkipIisCustomErrors = true;
+            var formData = Request.QueryString.AllKeys.ToDictionary(k => k, v => Request.QueryString[v]);
+
+            List<Dictionary<string, string>> results;
+            try
+            {
+                results = _workbookRepository.Read(table, formData);
+            }
+            catch (CellServeException cex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { cex.Message });
+            }
+
+            object response = new
+            {
+                Table = table,
+                Operation = "Read",
+                Filter = formData,
+                Results = results
+            };
+
+            return Json(response, JsonRequestBehavior.AllowGet);
+        }
+
     }
 }
