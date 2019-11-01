@@ -1,5 +1,7 @@
 ﻿<div class="jumbotron">
     <h1>CellServe</h1>
+    <p>These are tools for testing the example Excel workbook which has Customers and Products tables.
+    You may want to borrow the example code for your forms by viewing the source of this page using F12 developer tools.</p>
 </div>
 
 <div class="row">
@@ -8,9 +10,11 @@
     </div>
 </div>
 
+<h3>Customer tools</h3>
+
 <div class="row">
-    <p>Add Customer</p>
     <div class="col-md-4">
+        <p>Add Customer</p>
         <form action="/Data/Customers" method="POST">
             <div class="form-group">
                 <label for="Name">Name</label>
@@ -19,7 +23,7 @@
                        id="Name"
                        name="Name"
                        placeholder="Name"
-                       value="Mr Gerfmans">
+                       value="Mr Becker">
             </div>
             <div class="form-group">
                 <label for="DoB">DoB</label>
@@ -35,7 +39,7 @@
                        id="Country"
                        name="Country"
                        placeholder="Country"
-                       value="Germany">
+                       value="UK">
             </div>
             <button type="submit" class="btn btn-default">Post</button>
         </form>
@@ -66,7 +70,9 @@
     </div>
 </div>
 
-<div class="row"></div>
+<div class="row"><br /></div>
+
+<h3>Products tools</h3>
 
 <div class="row">
     <div class="col-md-4">
@@ -140,6 +146,28 @@
                        value="10">
             </div>
             <button type="submit" class="btn btn-default">Get filtered</button>
+        </form>
+    </div>
+</div>
+
+<div class="row"><br /></div>
+
+<h3>Search tools</h3>
+
+<div class="row">
+    <div class="col-md-4">
+        <p>Suggestions for Customers</p>
+        <form action="/Data/Customers/Suggestions" method="GET">
+            <div class="form-group">
+                <label for="Name">Name</label>
+                <input type="text"
+                       class="form-control"
+                       id="Name"
+                       name="Name"
+                       placeholder="Name"
+                       value="Test">
+            </div>
+            <button type="submit" class="btn btn-default">Post</button>
         </form>
     </div>
 </div>

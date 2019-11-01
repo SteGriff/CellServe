@@ -86,7 +86,7 @@ namespace CellServe.Web.Controllers
             else if (formData.Count > 1)
             {
                 Response.StatusCode = 400;
-                return Json(new { Message = "Please pass in only field only to get Suggestions for that field. You sent multiple fields." });
+                return Json(new { Message = "Please pass in one field only to get Suggestions for that field. You sent multiple fields." });
             }
 
             var searchColumn = formData.FirstOrDefault().Key;

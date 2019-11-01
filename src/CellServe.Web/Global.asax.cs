@@ -10,6 +10,7 @@ using CellServe.ExcelHandler;
 using CellServe.ExcelHandler.Strategies;
 using System.Reflection;
 using LazyCache;
+using CellServe.ExcelHandler.Adapters;
 
 namespace CellServe.Web
 {
@@ -29,7 +30,7 @@ namespace CellServe.Web
             container.Register<IWorkbookRepository, WorkbookRepository>(Lifestyle.Scoped);
             container.Register<ISheetFilterStrategy, SheetFilterStrategy>(Lifestyle.Scoped);
             container.Register<IRowModelingStrategy, RowModelingStrategy>(Lifestyle.Scoped);
-            container.Register<IAppCache, CachingService>(Lifestyle.Singleton);
+            container.Register<IAppCache, AppCacheAdapter>(Lifestyle.Singleton);
 
             container.RegisterMvcControllers(Assembly.GetExecutingAssembly());
             container.Verify();
