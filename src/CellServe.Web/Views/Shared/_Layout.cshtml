@@ -21,6 +21,7 @@
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
                     <li>@Html.ActionLink("Home", "Index", "Home")</li>
+                    <li>@Html.ActionLink("Tester", "Tester", "Home")</li>
                 </ul>
             </div>
         </div>
@@ -28,13 +29,25 @@
     <div class="container body-content">
         @RenderBody()
         <hr />
-        <footer>
-            <p>&copy; @DateTime.Now.Year</p>
+        <footer class="row">
+            <div class="col-md-4">
+                &copy; @DateTime.Now.Year SteGriff <br/>
+                <a href="https://github.com/stegriff/cellserve">CellServe on GitHub</a>
+            </div>
+            <div class="col-md-4 text-center"><a href="#top">Back to top</a></div>
+            <div class="col-md-4">
+                <b>Globalization</b><br />
+                @{ var onePointZero = 1.0M; }
+                Local date: @DateTime.Now.ToShortDateString();<br />
+                Local time: @DateTime.Now.ToShortTimeString();<br />
+                Currency: @(onePointZero.ToString("C"))
+            </div>
         </footer>
     </div>
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
+    @Scripts.Render("~/bundles/vue")
     @RenderSection("scripts", required: false)
 </body>
 </html>

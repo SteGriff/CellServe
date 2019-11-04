@@ -58,6 +58,8 @@
     <Compile Include="Interfaces\ISheetFilterStrategy.cs" />
     <Compile Include="Interfaces\IWorkbookRepository.cs" />
     <Compile Include="Adapters\AppCacheAdapter.cs" />
+    <Compile Include="Models\SpreadsheetSchema.cs" />
+    <Compile Include="Models\WorkbookSchema.cs" />
     <Compile Include="Strategies\RowModelingStrategy.cs" />
     <Compile Include="Strategies\SheetFilterStrategy.cs" />
     <Compile Include="WorkbookConfig.cs" />

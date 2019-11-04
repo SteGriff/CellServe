@@ -1,4 +1,5 @@
 ﻿using CellServe.ExcelHandler.Interfaces;
+using CellServe.ExcelHandler.Models;
 using CellServe.ExcelHandler.Strategies;
 using LazyCache;
 using OfficeOpenXml;
@@ -48,6 +49,24 @@ namespace CellServe.ExcelHandler
             }
         }
 
+        public WorkbookSchema Schema()
+        {
+            var schema = _cache.GetOrAdd($"schema", () => GetSchema());
+            return schema;
+        }
+
+        private WorkbookSchema GetSchema()
+        {
+            lock (_workbookLock)
+            {
+                using (var excel = GetExcelPackage())
+                {
+                    var schema = new WorkbookSchema(excel);
+                    return schema;
+                }
+            }
+        }
+
         public List<Dictionary<string, string>> Read(string table, Dictionary<string, string> filterDictionary)
         {
             lock (_workbookLock)
@@ -59,7 +78,7 @@ namespace CellServe.ExcelHandler
                     try
                     {
                         sheet = GetWorksheet(excel, table);
-                        headers = GetHeaders(sheet.Cells);
+                        headers = sheet.Cells.GetHeaders();
                     }
                     catch (Exception)
                     {
@@ -83,7 +102,7 @@ namespace CellServe.ExcelHandler
                     try
                     {
                         sheet = GetWorksheet(excel, table);
-                        headers = GetHeaders(sheet.Cells);
+                        headers = sheet.Cells.GetHeaders();
                     }
                     catch (Exception)
                     {
@@ -114,7 +133,7 @@ namespace CellServe.ExcelHandler
                     try
                     {
                         sheet = GetWorksheet(excel, table);
-                        headers = GetHeaders(sheet.Cells);
+                        headers = sheet.Cells.GetHeaders();
                     }
                     catch (Exception)
                     {
@@ -157,31 +176,7 @@ namespace CellServe.ExcelHandler
             name = name.ToLower();
             return excel.Workbook.Worksheets.FirstOrDefault(w => w.Name.ToLower() == name);
         }
-
-        /// <summary>
-        /// Get a dictionary of header address to field names, i.e. A => Name, B => DoB
-        /// </summary>
-        /// <param name="cells">The worksheet cells to scan</param>
-        /// <returns>A dictionary of header address to field name</returns>
-        private Dictionary<string, string> GetHeaders(ExcelRange cells)
-        {
-            var row = cells["1:1"];
-            var headers = new Dictionary<string, string>();
-
-            foreach (var cell in row)
-            {
-                // Stop scanning header row as soon as we get to an empty cell
-                if (cell.Value == null) break;
-
-                headers.Add(
-                    cell.Address.AddressToColumnAlpha(),
-                    cell.Value.ToString().Trim()
-                );
-            }
-
-            return headers;
-        }
-
+        
         private ExcelRange GetNextFreeRow(ExcelWorksheet sheet)
         {
             try
