@@ -4,9 +4,11 @@
     <h1>CellServe</h1>
 </div>
 
-<div class="row">
+<div id="app">
     <h2>Your Workbook</h2>
-    <p>Loaded: <code>@Model.FilePath</code>, contains <span class="badge">@Model.NumberOfSheets</span> sheets</p>
+    <p>Loaded: <code>@Model.FilePath</code>, contains <span class="badge">@Model.NumberOfSheets</span> sheets. </p>
+    <p>Get <a href="/Schema">Schema JSON</a>. </p>
+
     @foreach (var sheet in Model.Sheets)
     {
         <div class="well row">
@@ -28,7 +30,7 @@
                         <tr>
                             @foreach (var header in sheet.Headers)
                             {
-                                <th>@header.Value</th>
+                                <td>@header.Value</td>
                             }
                         </tr>
                     </tbody>
@@ -38,3 +40,28 @@
         </div>
     }
 </div>
+
+@section Scripts
+{
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data: {
+            },
+            methods: {
+            }
+        })
+
+        function debounce(fn, delay) {
+            var timeoutID = null;
+            return function () {
+                clearTimeout(timeoutID);
+                var args = arguments;
+                var that = this;
+                timeoutID = setTimeout(function () {
+                    fn.apply(that, args)
+                }, delay);
+            }
+        }
+    </script>
+}

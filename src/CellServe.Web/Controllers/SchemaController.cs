@@ -20,8 +20,15 @@ namespace CellServe.Web.Controllers
         // GET: Schema
         public ActionResult Index()
         {
-            
-            return View();
+            var schema = _workbookRepository.Schema();
+
+            object response = new
+            {
+                Operation = "Schema",
+                Results = schema
+            };
+
+            return Json(response, JsonRequestBehavior.AllowGet);
         }
     }
 }

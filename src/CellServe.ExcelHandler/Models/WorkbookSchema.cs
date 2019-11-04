@@ -25,7 +25,7 @@ namespace CellServe.ExcelHandler.Models
             {
                 var ws = new SpreadsheetSchema(sheet.Name)
                 {
-                    Rows = sheet.Dimension.Rows,
+                    Rows = sheet.Dimension.Rows - 1,
                     Headers = sheet.Cells.GetHeaders()
                 };
                 Sheets.Add(ws);
