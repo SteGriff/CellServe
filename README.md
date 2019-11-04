@@ -20,6 +20,8 @@ You can then design input forms and analytics with your choice of platform and t
  + [x] Write to an Excel sheet by POSTing
  + [x] Read all from an Excel sheet
  + [x] Read filtered data from an Excel sheet based on exact match on specified filter fields
+ + [x] Get autocomplete entries for a given column
+ + [x] Get schema information of the connected workbook
  + [ ] Fuzzy filters
  + [ ] Delete a row by POSTing or DELETE-ing to an existing row number
  + [ ] Update a row by POSTing to an existing row number
@@ -27,11 +29,15 @@ You can then design input forms and analytics with your choice of platform and t
 
 ## Setup
 
- 0. Configure CellServe as an IIS website
+ 0. Configure CellServe as an IIS website. If you haven't done this before, see [Setting up IIS for the first time][sgiis]
  0. Set up an Excel workbook in a location of your choice
- 0. Open the `web.config` file in an editor. Change the `WorkbookFilePath` setting to point to your `xlsx` file. 
+ 0. Open the `web.config` file in an editor. Change the `WorkbookFilePath` setting to point to your `xlsx` file
+ 0. Go to the root page of your configured CellServe site to see diagnostics of the connection to the workbook
 
 N.b. If we can't find your configured Excel file location, a data store will be created at `C:\Temp\CellServeData.xlsx`, but it will be empty, so your consequent requests will fail.
+
+[sgiis]: https://stegriff.co.uk/upblog/setting-up-iis-for-the-first-time/
+
 
 ### Security
 
@@ -132,7 +138,37 @@ The response will be HTTP 200 with a structured JSON representation of your data
 }
 ```
 
-N.b. We add an `$ExcelRow` property to help you find data in the source spreadsheet.
+N.b. We add an `$ExcelRow` property to help you find data in the source spreadsheet, and for use in Update and Delete operations.
+
+
+### `GET /Data/{Table}/Suggestions?{Column}={PartialValue}`
+
+Gets suggestions (autocomplete values) for a specified column of a specified table. The filter is not case sensitive.
+
+This works like the GET data endpoint, but you should only specify one field-value pair.
+
+For example, to search the Customers table for Names containing 'test', request `/Data/Customers/Suggestions?Name=test` to get a response like this:
+
+````
+{
+  "Table": "Customers",
+  "Operation": "Suggestions",
+  "Filter": {
+    "Name": "Test"
+  },
+  "Results": [
+    "Mr Test",
+    "Test 1"
+  ]
+}
+````
+
+Some rules:
+
+ * Your search term must be three or more characters.
+ * A maximum of 20 results are returned.
+ * If you don't pass a filter, you will get a 400 error with the text, "Please pass in a Key:Value representing a Column:SearchTerm"  
+ * If you pass more than one filter, you will get a 400 error with the text, "Please pass in one field only to get Suggestions for that field. You sent multiple fields."
 
 
 ## Excel Schema
