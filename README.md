@@ -29,34 +29,24 @@ You can then design input forms and analytics with your choice of platform and t
 
 ## Setup
 
- 0. Configure CellServe as an IIS website. If you haven't done this before, see [Setting up IIS for the first time][sgiis]
- 0. Set up an Excel workbook in a location of your choice
- 0. Open the `web.config` file in an editor. Change the `WorkbookFilePath` setting to point to your `xlsx` file
- 0. Go to the root page of your configured CellServe site to see diagnostics of the connection to the workbook
+The canonical solution is `src\CellServe\CellServe.slnx`. It targets .NET 10 and uses ASP.NET Core MVC. Configure the workbook path using the `Workbook:FilePath` setting in `src\CellServe\CellServe.Web\appsettings.json`, or override it with the `Workbook__FilePath` environment variable. The IIS application-pool identity must have read/write access to the workbook and its containing directory.
 
-N.b. If we can't find your configured Excel file location, a data store will be created at `C:\Temp\CellServeData.xlsx`, but it will be empty, so your consequent requests will fail.
+Restore, build, test, and publish from the repository root:
 
-[sgiis]: https://stegriff.co.uk/upblog/setting-up-iis-for-the-first-time/
+```
+dotnet restore src\CellServe\CellServe.slnx
+dotnet build src\CellServe\CellServe.slnx
+dotnet test src\CellServe\CellServe.slnx
+dotnet publish src\CellServe\CellServe.Web\CellServe.Web.csproj -c Release
+```
 
+Deploy the published output to IIS with the .NET 10 Hosting Bundle installed. CellServe does not enable cross-origin requests by default; configure approved origins in the application settings when browser clients on other origins need API access.
 
 ### Security
 
 We expect you to run CellServe on a private local network. Any website on the network which can reach the CellServe server will be able to use its API.
 
-You can limit exposure to only a certain domain by configuring the `customHeaders` config in `web.config`:
-
-````
-<httpProtocol>
-  <customHeaders>
-    <clear />
-    <add name="Access-Control-Allow-Origin" value="*" />
-  </customHeaders>
-</httpProtocol>
-````
-
-Change the `*` to a fully qualified domain, like `https://mycompany.intranet.local`. For more info, see the MDN page on [Access Control Allow Origin][mdncors].
-
-[mdncors]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin 
+Configure specific allowed origins through `Cors:AllowedOrigins` in `appsettings.json` or `Cors__AllowedOrigins__0` in the environment. Avoid using `*` for deployments that handle sensitive workbook data.
 
 
 ## API
@@ -85,7 +75,7 @@ For example, if your workbook has a sheet called 'Customers', with a heading lab
 
 The response will be HTTP 201 with a confirmation of the data and operation you sent.
 
-In case of an error, there will be JSON response with a `Message` property, and a HTTP 400, like: `{"Message":"No such table as Cstomers"}`
+In case of an error, the API returns HTTP 400 with a `message` property, for example: `{"message":"No such table as Cstomers"}`
 
 
 ### `GET /Data/{Table}`
@@ -118,21 +108,21 @@ The response will be HTTP 200 with a structured JSON representation of your data
 
 ```
 {
-  "Table": "Products",
-  "Operation": "Read",
-  "Filter": {},
-  "Results": [
+  "table": "Products",
+  "operation": "Read",
+  "filter": {},
+  "results": [
     {
       "$ExcelRow": "2",
-      "SKU": "ABC101",
-      "Name": "Rice cake",
-      "Qty": "10"
+      "sku": "ABC101",
+      "name": "Rice cake",
+      "qty": "10"
     },
     {
       "$ExcelRow": "3",
-      "SKU": "ABC102",
-      "Name": "Rice flour",
-      "Qty": "10"
+      "sku": "ABC102",
+      "name": "Rice flour",
+      "qty": "10"
     }
   ]
 }
@@ -151,12 +141,12 @@ For example, to search the Customers table for Names containing 'test', request 
 
 ````
 {
-  "Table": "Customers",
-  "Operation": "Suggestions",
-  "Filter": {
-    "Name": "Test"
+  "table": "Customers",
+  "operation": "Suggestions",
+  "filter": {
+    "name": "Test"
   },
-  "Results": [
+  "results": [
     "Mr Test",
     "Test 1"
   ]
@@ -167,8 +157,8 @@ Some rules:
 
  * Your search term must be three or more characters.
  * A maximum of 20 results are returned.
- * If you don't pass a filter, you will get a 400 error with the text, "Please pass in a Key:Value representing a Column:SearchTerm"  
- * If you pass more than one filter, you will get a 400 error with the text, "Please pass in one field only to get Suggestions for that field. You sent multiple fields."
+ * If you don't pass a filter, you get a 400 error asking for one column/search-term value.
+ * If you pass more than one filter, you get a 400 error asking for exactly one field.
 
 
 ## Excel Schema

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CellServe</title>
+    <link rel="stylesheet" href="/Content/bootstrap.min.css" />
+    <link rel="stylesheet" href="/Content/bootstrap-theme.min.css" />
+    <link rel="stylesheet" href="/Content/Site.css" />
+</head>
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">CellServe</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li><a asp-controller="Home" asp-action="Tester">Tester</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="container body-content">
+        @RenderBody()
+        <hr />
+        <footer class="row">
+            <div class="col-md-4">
+                &copy; @DateTime.Now.Year SteGriff<br />
+                <a href="https://github.com/stegriff/cellserve">CellServe on GitHub</a>
+            </div>
+            <div class="col-md-4 text-center"><a href="#top">Back to top</a></div>
+            <div class="col-md-4">
+                <b>Globalization</b><br />
+                Local date: @DateTime.Now.ToShortDateString()<br />
+                Local time: @DateTime.Now.ToShortTimeString()<br />
+                Currency: @((1.0M).ToString("C"))
+            </div>
+        </footer>
+    </div>
+    <script src="/Scripts/jquery-3.3.1.min.js"></script>
+    <script src="/Scripts/bootstrap.min.js"></script>
+    <script src="/Scripts/vue.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

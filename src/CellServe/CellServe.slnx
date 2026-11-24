@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="CellServe.ExcelHandler/CellServe.ExcelHandler.csproj" />
+  <Project Path="CellServe.Web.Tests/CellServe.Web.Tests.csproj" />
+  <Project Path="CellServe.Web/CellServe.Web.csproj" />
+</Solution>
